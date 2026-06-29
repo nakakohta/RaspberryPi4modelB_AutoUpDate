@@ -23,10 +23,68 @@ root以外で実行された場合は、ログファイルには書き込まずs
 
 ## インストール
 
+Raspberry Pi上でリポジトリを取得してから、スクリプト、logrotate設定、cron設定を配置します。
+以下の手順は、Raspberry Pi OS / Debian系で `sudo` が使えるユーザーとして実行してください。
+
+### 1. リポジトリを取得
+
+```bash
+mkdir -p ~/workspace
+cd ~/workspace
+git clone https://github.com/nakakohta/RaspberryPi4modelB_AutoUpDate.git
+cd RaspberryPi4modelB_AutoUpDate
+```
+
+すでにclone済みの場合は、最新化します。
+
+```bash
+cd ~/workspace/RaspberryPi4modelB_AutoUpDate
+git pull --ff-only origin main
+```
+
+### 2. スクリプトを配置
+
 ```bash
 sudo install -m 0755 apt-auto-maintenance.sh /usr/local/sbin/apt-auto-maintenance.sh
+```
+
+### 3. ログローテーションを設定
+
+ログの肥大化を防ぐため、logrotate設定を配置します。
+
+```bash
 sudo install -m 0644 apt-auto-maintenance.logrotate /etc/logrotate.d/apt-auto-maintenance
 ```
+
+### 4. cron設定を配置
+
+`/etc/cron.d/apt-auto-maintenance` を作成します。
+次の例では、毎月第2日曜日の05:30にrootで実行します。
+
+```bash
+sudo tee /etc/cron.d/apt-auto-maintenance >/dev/null <<'EOF'
+30 5 8-14 * * root [ "$(date +\%u)" = "7" ] && /usr/local/sbin/apt-auto-maintenance.sh
+EOF
+sudo chmod 0644 /etc/cron.d/apt-auto-maintenance
+sudo chown root:root /etc/cron.d/apt-auto-maintenance
+```
+
+cronサービスが無効な環境では、有効化して起動します。
+
+```bash
+sudo systemctl enable --now cron
+```
+
+### 5. すぐに一度実行する場合
+
+cronを待たずに一度だけ手動実行する場合は、次を実行します。
+
+```bash
+sudo /usr/local/sbin/apt-auto-maintenance.sh
+```
+
+このコマンドは実際に `apt-get update`、`apt-get full-upgrade -y`、`apt-get autoremove -y` を実行します。
+`/var/run/reboot-required` が存在する場合は自動で再起動します。
 
 ## cron設定例
 
@@ -63,23 +121,3 @@ sudo tail -n 100 /var/log/apt-auto-maintenance.log
 - 圧縮
 - 空ログはローテーションしない
 - ログファイルが存在しなくてもエラーにしない
-
-logrotate設定のドライラン確認例です。
-
-```bash
-sudo logrotate -d /etc/logrotate.d/apt-auto-maintenance
-```
-
-## 動作確認
-
-構文チェック:
-
-```bash
-bash -n apt-auto-maintenance.sh
-```
-
-`shellcheck` が利用できる環境では、静的チェックも推奨します。
-
-```bash
-shellcheck apt-auto-maintenance.sh
-```

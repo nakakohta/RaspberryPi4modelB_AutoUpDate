@@ -27,11 +27,21 @@ sudo install -m 0644 apt-auto-maintenance.logrotate /etc/logrotate.d/apt-auto-ma
 
 ## cron設定例
 
-`/etc/cron.d/apt-auto-maintenance` を作成し、毎週日曜 03:30 にrootで実行する例です。
+`/etc/cron.d/apt-auto-maintenance` を作成し、毎月第2日曜日の05:30にrootで実行する例です。
 
 ```cron
-30 3 * * 0 root /usr/local/sbin/apt-auto-maintenance.sh
+30 5 8-14 * * root [ "$(date +\%u)" = "7" ] && /usr/local/sbin/apt-auto-maintenance.sh
 ```
+
+このcron設定の意味は次のとおりです。
+
+- `30 5` は05:30を表します。
+- `8-14` は毎月8日から14日を表します。
+- `date +%u` は曜日番号を返し、`7` は日曜日を表します。
+- これらを組み合わせて、毎月第2日曜日の05:30だけ実行します。
+
+実行時刻を変更したい場合は、先頭の分と時を変更します。
+たとえば04:15に実行したい場合は、先頭を `15 4` に変更します。
 
 ## ログ確認
 

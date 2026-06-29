@@ -6,6 +6,10 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 LOG_FILE=/var/log/apt-auto-maintenance.log
 LOCK_FILE=/var/lock/apt-auto-maintenance.lock
 REBOOT_REQUIRED=/var/run/reboot-required
+APT_GET_DPKG_OPTIONS=(
+    -o Dpkg::Options::=--force-confdef
+    -o Dpkg::Options::=--force-confold
+)
 
 timestamp() {
     date '+%Y-%m-%d %H:%M:%S%z'
@@ -51,7 +55,7 @@ main() {
     log "APT auto maintenance started."
 
     run_step "apt-get update" apt-get update
-    run_step "apt-get full-upgrade -y" env DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y
+    run_step "apt-get full-upgrade -y" env DEBIAN_FRONTEND=noninteractive apt-get "${APT_GET_DPKG_OPTIONS[@]}" full-upgrade -y
     run_step "apt-get autoremove -y" env DEBIAN_FRONTEND=noninteractive apt-get autoremove -y
 
     if [[ -e "${REBOOT_REQUIRED}" ]]; then

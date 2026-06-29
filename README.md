@@ -15,6 +15,9 @@ root権限でcronから実行される前提です。
 3. `apt-get autoremove -y`
 4. `/var/run/reboot-required` が存在する場合のみ `reboot`
 
+`full-upgrade` は `DEBIAN_FRONTEND=noninteractive` に加えて、dpkgの設定ファイル確認で止まりにくくするために `--force-confdef` と `--force-confold` を指定します。
+これにより、既定の処理がある場合はそれに従い、判断が必要な場合は既存の設定ファイルを維持します。
+
 実行ログは `/var/log/apt-auto-maintenance.log` に追記されます。
 root以外で実行された場合は、ログファイルには書き込まずstderrへ理由を出して終了します。
 
